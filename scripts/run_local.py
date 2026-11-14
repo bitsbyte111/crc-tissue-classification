@@ -73,6 +73,14 @@ PROFILES = {
 }
 
 
+# Lightweight pretrained models available to the capstone profile: --models name -> (config, final-run id)
+PRETRAINED_CHOICES = {
+    "mobilenetv3_small": ("l3_mobilenetv3_small_pt", "MobileNetV3_small_pretrained"),
+    "efficientnet_b0": ("l4_efficientnet_b0_pt", "EfficientNet_B0_pretrained"),
+    "resnet18": ("l1_resnet18_pt", "ResNet18_pretrained"),
+}
+
+
 def _plan_name(plan_file: str) -> str:
     from crc_tissuenet.ablation import load_plan
 
@@ -87,7 +95,8 @@ def _suite_name(suite_file: str) -> str:
 
 def _transfer_dir(prof: dict, model: str) -> Path:
     name = _plan_name(prof["transfer_plan"])
-    return ROOT / "runs" / (name if len(prof["transfer_models"]) == 1 else f"{name}_{model.split('_', 1)[1]}")
+    tag = model.split("_", 1)[1].removesuffix("_pt")  # l3_mobilenetv3_small_pt -> mobilenetv3_small
+    return ROOT / "runs" / (name if prof["cnn_plan"] != "capstone_cnn.yaml" else f"{name}_{tag}")
 
 
 def log(msg: str) -> None:
@@ -186,6 +195,13 @@ def phase_estimate(a) -> int:
         ep = opt(overrides, "train.epochs", plan["common_overrides"]["train.epochs"])
         return runs, runs * ep * (n_train * frac / speed[0] + n_val / speed[1]) * mix, plan
 
+    if a.profile == "capstone":  # measure every lightweight candidate so the choice is informed
+        print("\nLightweight pretrained candidates on this machine (train images/second, higher = faster):")
+        for key, (cfg_file, _) in PRETRAINED_CHOICES.items():
+            tr, ev = pretrained_speed(cfg_file)
+            chosen = "  <- selected" if cfg_file in prof["transfer_models"] else ""
+            print(f"  {key:<18} train {tr:6.0f} | evaluate {ev:6.0f}{chosen}")
+        print("  Choose with:  --models <name> <name>   (e.g. --models mobilenetv3_small resnet18)\n")
     rows = []
     mix = 1 + 0.4 * (cnn_tr / cnn_big - 1) / 2  # some candidates (bigger filters/networks) are slower
     runs, sec, cnn_plan = study(prof["cnn_plan"], prof["cnn_stages"], prof["cnn"], speeds["cnn"], mix)
@@ -197,10 +213,12 @@ def phase_estimate(a) -> int:
         rows.append((f"transfer study: {m}", runs, sec))
     suite = load_suite(ROOT / "configs/suites" / prof["suite"])
     bench = 0.0
+    n_bench = 0
     for ids, ovs in prof["bench_groups"]:
         for run in suite["runs"]:
             if ids and run["id"] not in ids:
                 continue
+            n_bench += 1
             cfg_path = (suite["_dir"] / run["config"]).resolve()
             final = {}
             if not cfg_path.exists():  # tuned config written by a study: estimate from its base config
@@ -214,7 +232,7 @@ def phase_estimate(a) -> int:
             frac = opt(ovs, "data.subset_fraction", cfg["data"].get("subset_fraction", 1.0))
             ep = opt(ovs, "train.epochs", cfg["train"]["epochs"])
             bench += ep * (n_train * frac / sp[0] + n_val / sp[1]) * (mix if name == "simple_cnn" else 1) + n_test / sp[1]
-    rows.append(("final comparison (test)", len(suite["runs"]), bench))
+    rows.append(("final comparison (test)", n_bench, bench))
     rows.append(("eda + explain + summary", "-", 12 * 60))
     total = sum(r[2] for r in rows)
     print("images/second (train | evaluate): " + ", ".join(f"{k} {v[0]:.0f}|{v[1]:.0f}" for k, v in speeds.items()))
@@ -356,9 +374,16 @@ def main():
     ap.add_argument("--profile", default="capstone", choices=sorted(PROFILES))
     ap.add_argument("--data-dir", default=None, help="folder containing your downloaded PathMNIST files")
     ap.add_argument("--threads", type=int, default=None, help="CPU threads for PyTorch (default: all cores)")
+    ap.add_argument("--models", nargs="+", default=["mobilenetv3_small", "efficientnet_b0"],
+                    choices=sorted(PRETRAINED_CHOICES),
+                    help="capstone profile: lightweight pretrained models to study and compare")
     ap.add_argument("-o", "--override", nargs="*", default=[], help="extra overrides for every run (advanced)")
     a = ap.parse_args()
     os.chdir(ROOT)
+    if a.profile == "capstone":
+        PROFILES["capstone"]["transfer_models"] = [PRETRAINED_CHOICES[m][0] for m in a.models]
+        PROFILES["capstone"]["bench_groups"] = [(["CNN_baseline_default", "CNN_baseline_tuned"]
+                                                 + [PRETRAINED_CHOICES[m][1] for m in a.models], [])]
     if a.threads:
         os.environ["OMP_NUM_THREADS"] = os.environ["MKL_NUM_THREADS"] = str(a.threads)
         import torch

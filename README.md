@@ -2,7 +2,7 @@
 
 **Benchmarking CNNs, vision transformers and MLP models for colorectal cancer tissue classification in H&E histopathology (PathMNIST)**
 
-[![CI](https://github.com/bitsbyte111/crc-tissue-classification/actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![CI](https://github.com/<your-username>/crc-tissuenet/actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-ee4c2c)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -105,7 +105,7 @@ See [docs/KAGGLE.md](docs/KAGGLE.md) for uploading data, committed background ru
 ### Local
 
 ```bash
-git clone https://github.com/bitsbyte111/crc-tissue-classification.git && cd crc-tissuenet
+git clone https://github.com/<your-username>/crc-tissuenet.git && cd crc-tissuenet
 pip install -e ".[tune,dev]"        # or: pip install -r requirements.txt
 pytest -q                           # 63 tests, synthetic data, CPU
 make smoke                          # end-to-end pipeline check (~1 min, no download)

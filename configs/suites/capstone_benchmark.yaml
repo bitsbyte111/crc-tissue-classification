@@ -1,6 +1,7 @@
 # Capstone - final comparison on the independent test cohort (7,180 patches from 50 unseen patients).
 # Baseline CNN: proposal default and the hyperparameter-study winner, both on ALL training data.
 # Pretrained lightweight models: the transfer-study winners, on half the training data for 4 epochs.
+# scripts/run_local.py runs only the two models chosen with --models (default: MobileNetV3-Small, EfficientNet-B0).
 name: capstone_benchmark
 seeds: [42]
 reference: CNN_baseline_tuned
@@ -13,3 +14,4 @@ runs:
   - {id: CNN_baseline_tuned,   config: ../models/b1_cnn_tuned_capstone.yaml}
   - {id: MobileNetV3_small_pretrained, config: ../models/l3_mobilenetv3_small_pt_tuned.yaml}
   - {id: EfficientNet_B0_pretrained,   config: ../models/l4_efficientnet_b0_pt_tuned.yaml}
+  - {id: ResNet18_pretrained,          config: ../models/l1_resnet18_pt_tuned.yaml}   # alternative (--models resnet18)

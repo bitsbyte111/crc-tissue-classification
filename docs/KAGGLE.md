@@ -31,7 +31,7 @@ Scratch disk is not saved between versions, so every committed version would rep
 **Recommended: export once.** In a CPU-only notebook (*Accelerator: None*, so no GPU quota is used), run:
 
 ```bash
-!git clone -q https://github.com/bitsbyte111/crc-tissue-classification.git && cd crc-tissuenet && python scripts/export_npy.py --sizes 28 224
+!git clone -q https://github.com/<your-username>/crc-tissuenet.git && cd crc-tissuenet && python scripts/export_npy.py --sizes 28 224
 ```
 
 Commit it with *Save & Run All*. It writes uncompressed arrays (about 16.5 GB) to its output. Attach that output to the main notebook (*Add Input → Your Work*) instead of any PathMNIST dataset. Every version then memory-maps the arrays directly: no download, no decompression.
