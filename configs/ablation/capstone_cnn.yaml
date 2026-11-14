@@ -1,0 +1,71 @@
+# Capstone - baseline CNN hyperparameter study (from scratch, 28 px, laptop CPU).
+# Six core concepts, 2-3 settings each (12 training runs): gradient-descent variant, learning rate,
+# batch size, activation function, filter size and dropout. Each stage keeps the setting with the
+# best VALIDATION macro F1 and carries it into the next stage (the test set is never used here).
+# Every run trains on a stratified 30 % of the training split for 8 epochs; validation uses all
+# 10,004 validation patches. The winner is retrained on ALL training data in the final comparison.
+
+name: capstone_cnn
+title: Baseline CNN - hyperparameter study
+base: ../models/b1_cnn.yaml
+best_config_out: configs/models/b1_cnn_tuned_capstone.yaml
+selection_metric: val_macro_f1
+seeds: [42]
+common_overrides:
+  data.subset_fraction: 0.3
+  train.epochs: 8
+  train.early_stopping_patience: 3
+  train.save_checkpoint: none
+  eval.save_predictions: false
+final_overrides:
+  data.subset_fraction: 1.0
+  train.epochs: 15
+  train.early_stopping_patience: 4
+
+stages:
+  - name: optimizer
+    concept: Gradient-descent variants - plain stochastic gradient descent, SGD with momentum, and the adaptive Adam optimiser.
+    expect: "Adam converges fastest; momentum clearly improves on plain SGD by smoothing noisy gradients; plain SGD lags within 8 epochs."
+    candidates:
+      sgd:          {train.optimizer: sgd,      train.lr: 0.05}
+      sgd_momentum: {train.optimizer: momentum, train.lr: 0.01}
+      adam:         {train.optimizer: adam,     train.lr: 0.001}
+
+  - name: learning_rate
+    concept: The step size of gradient descent (x0.1, x1 and x10 the chosen optimiser's default).
+    expect: "x0.1 learns too slowly in 8 epochs; x10 oscillates or diverges; x1 is best."
+    candidates:
+      x0.1: {__scale__: {train.lr: 0.1}}
+      x1:   {}
+      x10:  {__scale__: {train.lr: 10.0}}
+
+  - name: batch_size
+    concept: Mini-batch size - small batches give noisier gradients but more updates per epoch; large batches are faster per epoch.
+    expect: "32 gives the most updates and slightly better F1 at a fixed learning rate; 512 is fastest per epoch but weakest."
+    candidates:
+      "32":  {train.batch_size: 32}
+      "128": {train.batch_size: 128}
+      "512": {train.batch_size: 512}
+
+  - name: activation
+    concept: Activation function - ReLU vs the saturating tanh and sigmoid, whose small derivatives shrink gradients layer by layer (vanishing gradient).
+    expect: "ReLU best; sigmoid clearly worst with a much smaller first-layer gradient norm; tanh in between."
+    candidates:
+      relu:    {model.params.activation: relu}
+      tanh:    {model.params.activation: tanh}
+      sigmoid: {model.params.activation: sigmoid}
+
+  - name: filter_size
+    concept: Convolution filter (kernel) size - a 5x5 filter sees more context per layer than 3x3, at about 2.8x the parameters and compute.
+    expect: "Small or no gain from 5x5 on 28 px patches, at a clearly higher cost per epoch."
+    candidates:
+      "3x3": {model.params.kernel_size: 3}
+      "5x5": {model.params.kernel_size: 5}
+
+  - name: dropout
+    concept: Dropout regularisation before the classifier - randomly silencing units to reduce over-fitting.
+    expect: "Small effect with ~27,000 training patches and a small network; 0.5 may slightly under-fit."
+    candidates:
+      "0.0":  {model.params.dropout: 0.0}
+      "0.25": {model.params.dropout: 0.25}
+      "0.5":  {model.params.dropout: 0.5}

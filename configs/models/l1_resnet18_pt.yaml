@@ -1,0 +1,13 @@
+# L1 - ImageNet-pretrained ResNet-18 sized for a laptop CPU: 28 px patches up-sampled to 64 px.
+# (ResNet-50 / 224 px is ~20x more compute and not practical on a CPU.)
+_base_: pretrained_base.yaml
+experiment: {name: L1_resnet18_pt}
+data: {size: 28, num_workers: 0}
+model:
+  name: resnet18
+  input_size: 64
+  params: {drop_rate: 0.1}
+train:
+  epochs: 3
+  batch_size: 64
+  save_checkpoint: best

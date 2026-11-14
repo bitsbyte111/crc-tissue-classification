@@ -1,0 +1,17 @@
+# Study 4 on a laptop CPU: final models on the independent test cohort (7,180 patches, 50 patients).
+# Scratch models train on ALL 89,996 training patches; pretrained models on half of them for 3 epochs.
+# Tuned configs come from the CPU hyperparameter studies (skipped with a warning until they exist).
+name: local_cpu_benchmark
+seeds: [42]
+reference: B1_cnn_tuned
+common_overrides:
+  eval.test: true
+  eval.bootstrap: 1000
+  data.num_workers: 0
+runs:
+  - {id: B0_mlp,          config: ../models/b0_mlp.yaml, overrides: {train.epochs: 15}}
+  - {id: B1_cnn,          config: ../models/b1_cnn.yaml, overrides: {train.epochs: 15}}     # proposal default
+  - {id: B1_cnn_tuned,    config: ../models/b1_cnn_tuned_cpu.yaml}                          # Study 1 winner
+  - {id: L1_resnet18_pt,  config: ../models/l1_resnet18_pt.yaml, overrides: {data.subset_fraction: 0.5}}
+  - {id: L1_resnet18_tuned, config: ../models/l1_resnet18_pt_tuned.yaml}                       # Study 2 winner
+  - {id: L2_deit_tiny_pt, config: ../models/l2_deit_tiny_pt.yaml, overrides: {data.subset_fraction: 0.5}}

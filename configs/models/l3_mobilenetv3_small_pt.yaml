@@ -1,0 +1,16 @@
+# L3 - ImageNet-pretrained MobileNetV3-Small (1.5 M parameters): depthwise-separable convolutions,
+# squeeze-and-excitation and hard-swish activations, designed for phones and CPUs.
+# 28 px patches are up-sampled to 64 px inside the model.
+_base_: pretrained_base.yaml
+experiment: {name: L3_mobilenetv3_small_pt}
+data: {size: 28, num_workers: 0}
+model:
+  name: mobilenetv3_small
+  input_size: 64
+  params: {drop_rate: 0.1}
+train:
+  epochs: 4
+  batch_size: 64
+  lr: 5.0e-4
+  weight_decay: 0.01
+  save_checkpoint: best

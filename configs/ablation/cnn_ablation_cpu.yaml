@@ -1,0 +1,16 @@
+# Study 1 on a laptop CPU: the same 18 hyperparameter stages as cnn_ablation.yaml, on a stratified
+# 20 % of the training split (~18,000 patches) for 8 epochs. Validation always uses all 10,004 patches,
+# so every setting is judged on identical data. Typical runtime: 1.5-3 h on a 4-core Core i7
+# (run scripts/run_local.py --phases estimate for a measurement on your machine).
+extends: cnn_ablation.yaml
+name: cnn_ablation_cpu
+title: CNN hyperparameter study (from scratch, 28 px, CPU budget)
+best_config_out: configs/models/b1_cnn_tuned_cpu.yaml
+common_overrides:
+  data.subset_fraction: 0.2
+  train.epochs: 8
+  train.early_stopping_patience: 3
+final_overrides:               # the tuned CNN is retrained on ALL training data in the benchmark
+  data.subset_fraction: 1.0
+  train.epochs: 15
+  train.early_stopping_patience: 4

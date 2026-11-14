@@ -1,0 +1,25 @@
+# Study 2 on a laptop CPU: transfer-learning hyperparameters for an ImageNet-pretrained ResNet-18
+# (28 px patches up-sampled to the model input), on 10 % of the training split for 3 epochs.
+extends: transfer_ablation.yaml
+name: transfer_ablation_cpu
+title: Transfer-learning hyperparameter study (ResNet-18, CPU budget)
+base: ../models/l1_resnet18_pt.yaml
+best_config_out: configs/models/l1_resnet18_pt_tuned.yaml
+only_stages: [finetune_strategy, learning_rate, augmentation, label_smoothing]
+common_overrides:
+  data.subset_fraction: 0.1
+  train.epochs: 3
+  train.early_stopping_patience: 3
+  train.save_checkpoint: none
+final_overrides:
+  data.subset_fraction: 0.5
+  train.epochs: 3
+  train.save_checkpoint: best
+stages_extra:
+  - name: input_resolution
+    concept: Pretrained filters were learned on 224 px photographs; up-sampling the 28 px patches to a larger input lets more of the network's depth see a meaningful image, at a quadratic cost in compute.
+    expect: "Larger inputs (64-112 px) beat 32 px clearly; returns diminish while time per epoch grows ~4x per doubling."
+    candidates:
+      "32px":  {model.input_size: 32}
+      "64px":  {model.input_size: 64}
+      "112px": {model.input_size: 112}

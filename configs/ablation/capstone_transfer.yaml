@@ -1,0 +1,39 @@
+# Capstone - transfer-learning study, run once per lightweight pretrained model (laptop CPU):
+#   python scripts/run_ablation.py --plan configs/ablation/capstone_transfer.yaml \
+#       --base configs/models/l3_mobilenetv3_small_pt.yaml --output-dir runs/capstone_transfer_mobilenetv3_small \
+#       --best-config-out configs/models/l3_mobilenetv3_small_pt_tuned.yaml
+# Two questions, 4 training runs per model: should the ImageNet features be frozen (feature extraction)
+# or fine-tuned, and which learning rate suits the pretrained weights?
+# Runs use 15 % of the training split for 3 epochs; validation is complete.
+
+name: capstone_transfer
+title: Transfer learning - fine-tuning strategy and learning rate
+base: ../models/l3_mobilenetv3_small_pt.yaml
+selection_metric: val_macro_f1
+seeds: [42]
+common_overrides:
+  data.subset_fraction: 0.15
+  train.epochs: 3
+  train.early_stopping_patience: 3
+  train.save_checkpoint: none
+  eval.save_predictions: false
+final_overrides:
+  data.subset_fraction: 0.5
+  train.epochs: 4
+  train.save_checkpoint: best
+
+stages:
+  - name: finetune_strategy
+    concept: Feature extraction (freeze the ImageNet backbone, train only a new classifier) vs fine-tuning (update all layers).
+    expect: "Fine-tuning wins because H&E tissue looks nothing like ImageNet photographs; frozen features still give a usable baseline, showing generic features partly transfer."
+    candidates:
+      feature_extraction: {train.finetune.strategy: linear_probe, train.lr: 1.0e-3, train.weight_decay: 0.0}
+      fine_tuning:        {train.finetune.strategy: full}
+
+  - name: learning_rate
+    concept: Pretrained weights need small steps; too large a learning rate overwrites what was learned on ImageNet.
+    expect: "An inverted U; the largest rate is clearly worse in the first epoch."
+    candidates:
+      x0.3: {__scale__: {train.lr: 0.3}}
+      x1:   {}
+      x3:   {__scale__: {train.lr: 3.0}}

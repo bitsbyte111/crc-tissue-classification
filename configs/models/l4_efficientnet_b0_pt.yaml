@@ -1,0 +1,15 @@
+# L4 - ImageNet-pretrained EfficientNet-B0 (4.0 M parameters): compound scaling of depth, width and
+# resolution with inverted-residual (MBConv) blocks. 28 px patches are up-sampled to 64 px.
+_base_: pretrained_base.yaml
+experiment: {name: L4_efficientnet_b0_pt}
+data: {size: 28, num_workers: 0}
+model:
+  name: efficientnet_b0
+  input_size: 64
+  params: {drop_rate: 0.2}
+train:
+  epochs: 4
+  batch_size: 64
+  lr: 3.0e-4
+  weight_decay: 0.01
+  save_checkpoint: best

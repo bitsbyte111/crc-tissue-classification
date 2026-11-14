@@ -1,0 +1,14 @@
+# L2 - ImageNet-pretrained DeiT-Tiny vision transformer sized for a laptop CPU: 28 px patches
+# up-sampled to 112 px (7 x 7 = 49 tokens of 16 x 16 px; position embeddings interpolated by timm).
+_base_: transformer_base.yaml
+experiment: {name: L2_deit_tiny_pt}
+data: {size: 28, num_workers: 0}
+model:
+  name: deit_tiny
+  input_size: 112
+  params: {drop_rate: 0.0, drop_path_rate: 0.05, timm_kwargs: {img_size: 112}}
+train:
+  epochs: 3
+  batch_size: 64
+  lr: 1.0e-4
+  save_checkpoint: best

@@ -1,0 +1,8 @@
+# Laptop / desktop without an NVIDIA GPU (e.g. Core i7, 16 GB RAM). Applied with --platform local_cpu.
+# 28 px data fit in ~0.3 GB of RAM and are loaded fully into memory (no loader workers needed).
+data.root: data
+data.source_dirs: [data]
+data.download: true          # if no data are found in data/, fetch the official file from Zenodo
+data.num_workers: 0
+data.eval_batch_size: 512
+experiment.device: auto      # uses an NVIDIA GPU if the laptop has one, otherwise the CPU

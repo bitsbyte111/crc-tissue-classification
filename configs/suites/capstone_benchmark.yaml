@@ -1,0 +1,15 @@
+# Capstone - final comparison on the independent test cohort (7,180 patches from 50 unseen patients).
+# Baseline CNN: proposal default and the hyperparameter-study winner, both on ALL training data.
+# Pretrained lightweight models: the transfer-study winners, on half the training data for 4 epochs.
+name: capstone_benchmark
+seeds: [42]
+reference: CNN_baseline_tuned
+common_overrides:
+  eval.test: true
+  eval.bootstrap: 1000
+  data.num_workers: 0
+runs:
+  - {id: CNN_baseline_default, config: ../models/b1_cnn.yaml, overrides: {train.epochs: 15, train.early_stopping_patience: 4}}
+  - {id: CNN_baseline_tuned,   config: ../models/b1_cnn_tuned_capstone.yaml}
+  - {id: MobileNetV3_small_pretrained, config: ../models/l3_mobilenetv3_small_pt_tuned.yaml}
+  - {id: EfficientNet_B0_pretrained,   config: ../models/l4_efficientnet_b0_pt_tuned.yaml}
