@@ -1,0 +1,58 @@
+experiment:
+  name: B1_cnn_tuned
+  output_dir: runs
+  seed: 42
+  deterministic: true
+  device: auto
+data:
+  root: data
+  source_dirs:
+  - data
+  size: 28
+  download: true
+  in_memory: auto
+  num_workers: 0
+  eval_batch_size: 512
+  subset_fraction: 0.5
+  synthetic: false
+  synthetic_samples: 512
+augment:
+  enabled: true
+  flips: true
+  rot90: true
+  color_jitter: 0.05
+  hed_jitter: 0.0
+model:
+  name: efficientnet_b0
+  input_size: 64
+  normalization: model
+  pretrained: true
+  weights_file: null
+  params:
+    drop_rate: 0.2
+train:
+  epochs: 4
+  batch_size: 64
+  optimizer: adamw
+  lr: 0.0009
+  momentum: 0.9
+  weight_decay: 0.01
+  scheduler: cosine
+  warmup_epochs: 1
+  label_smoothing: 0.1
+  class_weights: false
+  grad_clip: null
+  amp: true
+  data_parallel: false
+  early_stopping_patience: 3
+  monitor: val_macro_f1
+  save_checkpoint: best
+  resume: true
+  finetune:
+    strategy: full
+    trainable_fraction: 0.25
+    layer_decay: null
+eval:
+  test: true
+  bootstrap: 1000
+  save_predictions: true
